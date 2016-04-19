@@ -59,9 +59,15 @@ class DockerImagePrune
     # Here is potential to add more flexibility later.
     @dtr_hostname = DEFAULT_DTR_HOSTNAME
     @datetime_format = DEFAULT_TAG_DATETIME_FORMAT
+    @dtr_auth = nil
 
     config_hash = JSON.parse(File.read("#{Dir.home}/.docker/config.json"))
-    @dtr_auth = config_hash["auths"]["https://#{@dtr_hostname}"]["auth"]
+    if !config_hash["auths"]["https://#{@dtr_hostname}"].nil?
+      @dtr_auth = config_hash["auths"]["https://#{@dtr_hostname}"]["auth"]
+    elsif !config_hash["auths"][@dtr_hostname].nil?
+      @dtr_auth = config_hash["auths"][@dtr_hostname]["auth"]
+    end
+    raise "Cannot find credentials for #{@dtr_hostname} in #{Dir.home}/.docker/config.json" if @dtr_auth.nil?
   end
 
   def expired_tags_for_repo(repo)
