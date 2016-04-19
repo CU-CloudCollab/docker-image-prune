@@ -1,4 +1,4 @@
-# docker_image_prune
+# dtr-image-prune
 
 This repo contains functionality to list and delete images from a Docker Trusted Repository based on date stamps embedded in image tags.
 
@@ -18,12 +18,9 @@ If there would be fewer than three images in a repository tagged with timestamps
 
 ### Options
 
-`--namespace <namespace>` targets the specified DTR namespace; **required**
-
+ `--namespace <namespace>` targets the specified DTR namespace; **required**
 `--no-prune` (default) advises on what would happen, but does not alter the DTR at all
-
 `--prune` actually performs the tag deletion
-
 `--expiration <days>` changes the expiration period from default 90 days to <days>
 
 ### Usage
@@ -57,3 +54,8 @@ Target namespace is https://dtr.cucloud.net/repositories/cs. Images with timesta
   * version 1.4.3
 * Docker Trusted Repository API
   * version 0
+
+## Future Changes
+
+Besides the parameter options listed above, the code is written to be fairly easily extensible to different DTR hosts, tag datetime formats, and minimum images to keep.
+
