@@ -75,8 +75,8 @@ class DockerImagePrune
     target_tags = []
     all_date_tags = get_timestamp_tags(repo)
     if all_date_tags.nil? || all_date_tags.empty?
-      puts "No images will be removed."
-      return target_tags 
+      puts "No images to be removed."
+      return target_tags
     end
 
     # ensure tags are in timestamp order
