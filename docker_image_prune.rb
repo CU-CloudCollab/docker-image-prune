@@ -74,7 +74,10 @@ class DockerImagePrune
 
     target_tags = []
     all_date_tags = get_timestamp_tags(repo)
-    return target_tags if all_date_tags.nil? || all_date_tags.empty?
+    if all_date_tags.nil? || all_date_tags.empty?
+      puts "No images will be removed."
+      return target_tags 
+    end
 
     # ensure tags are in timestamp order
     all_date_tags.sort!{|x, y| x[:datetime] <=> y[:datetime]}
@@ -84,7 +87,10 @@ class DockerImagePrune
     puts "Total images with timestamp tags: #{all_date_tags.length}"
     puts "Total images to expire, nominally: #{expired_tags.length}"
 
-    if all_date_tags.length >= expired_tags.length + DEFAULT_MINIMUM_IMAGES_TO_KEEP
+    if expired_tags.length == 0
+      # nothing to do
+      puts "No images will be removed."
+    elsif all_date_tags.length >= expired_tags.length + DEFAULT_MINIMUM_IMAGES_TO_KEEP
       # delete all the expired tags, because there are at least 3 other datetime tags not expired
       puts "All #{expired_tags.length} images with expired tags will be removed."
       target_tags = expired_tags.map { | t | t[:tag] }

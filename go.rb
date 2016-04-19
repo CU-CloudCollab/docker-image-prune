@@ -27,6 +27,10 @@ parser = OptionParser.new do |opts|
 		options[:dry_run] = false;
 	end
 
+	opts.on('-x', '--no-prune', 'prune the images (defaults to false, i.e. a dry run)') do |x|
+		options[:dry_run] = true;
+	end
+
 	opts.on('-h', '--help', 'displays this help') do
 		puts opts
 		exit
