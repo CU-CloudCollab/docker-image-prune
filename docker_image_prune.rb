@@ -79,7 +79,7 @@ class DockerImagePrune
       return []
     end
 
-    return determine_expired_tags(timestamp_tags, @expiration_age_days, @datetime_format)
+    return DockerImagePrune.determine_expired_tags(timestamp_tags, @expiration_age_days, @datetime_format)
   end
 
   # Delete the images from the given repo having the provided tags
