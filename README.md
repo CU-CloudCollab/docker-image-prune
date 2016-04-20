@@ -1,4 +1,4 @@
-# dtr-image-prune
+# docker-image-prune
 
 This repo contains logic to remove Docker images from either a Docker machine, or a Docker Trusted Repository. Logic about which images to expire is based on a date-time stamp embedded in image tags.
 
