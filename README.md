@@ -25,10 +25,10 @@ If there would be fewer than three images in a repository tagged with timestamps
 
 ### Usage
 ```
-$ ./go.rb --help
+$ ./prune.rb --help
 Remove Docker Trusted Repository images that are older than n days based on timestamp in tags.
 
-Usage: go.rb [options]
+Usage: prune.rb [options]
     -n, --namespace namespace        (required) DTR namespace (e.g., cs)
     -a, --expiration age             maximum age in days (default = 90)
     -p, --prune                      prune the images (defaults to false, i.e. a dry run)
@@ -38,11 +38,11 @@ Usage: go.rb [options]
 
 ### Examples
 
-`./go.rb --namespace pea1 --expiration 30 --no-prune`
+`./prune.rb.rb --namespace pea1 --expiration 30 --no-prune`
 
 Target namespace is https://dtr.cucloud.net/repositories/pea1/. Images with timestamps in tags that are more than 30 days ago are targeted for deletion. However, no tags will actually be deleted because of the `--no-prune` parameter.
 
-`./go.rb --namespace cs  --expiration 90 --prune`
+`./prune.rb --namespace cs  --expiration 90 --prune`
 
 Target namespace is https://dtr.cucloud.net/repositories/cs. Images with timestamps in tags that are more than 90 days (i.e., the default) ago are targeted for deletion.
 
@@ -58,4 +58,3 @@ Target namespace is https://dtr.cucloud.net/repositories/cs. Images with timesta
 ## Future Changes
 
 Besides the parameter options listed above, the code is written to be fairly easily extensible to different DTR hosts, tag datetime formats, and minimum images to keep.
-
