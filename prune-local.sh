@@ -4,7 +4,7 @@
 # It utilizes the same expiration logic as prune-dtr.rb, but here the expiration age
 # is set very small because we want to expire all but the three most recent tags.
 #
-EXPIRATION_DAYS=1
+EXPIRATION_DAYS=90
 
 # Get the list of unique repos that are present locally
 for REPO in $(docker images --filter "dangling=false" --format '{{.Repository}}' | uniq)
