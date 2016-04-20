@@ -3,7 +3,8 @@
 # Fucntionality to list and prune images labeled with date labels
 # (in the format used by automatic Jenkins builds).
 #
-# Relies on ~/.docker/config.json for auth keys.
+# - Relies on ~/.docker/config.json for auth keys.
+# - Uses STDERR for user messaging so that it can be utilized more easily from bash scripts
 #
 # See README.md
 #
@@ -25,7 +26,7 @@ class DockerImagePrune
 
     repos = []
 
-    puts "Determining repos in #{dtr_repos_url}."
+    STDERR.puts "Determining repos in #{dtr_repos_url}."
 
     response = RestClient::Request.execute(
       method: :get,
@@ -72,39 +73,13 @@ class DockerImagePrune
 
   def expired_tags_for_repo(repo)
 
-    target_tags = []
-    all_date_tags = get_timestamp_tags(repo)
-    if all_date_tags.nil? || all_date_tags.empty?
-      puts "No images to be removed."
-      return target_tags
+    timestamp_tags = get_timestamp_tags(repo)
+    if timestamp_tags.nil? || timestamp_tags.empty?
+      STDERR.puts "No images to be removed."
+      return []
     end
 
-    # ensure tags are in timestamp order
-    all_date_tags.sort!{|x, y| x[:datetime] <=> y[:datetime]}
-
-    expired_tags = all_date_tags.select { |t| t[:expired] }
-
-    puts "Total images with timestamp tags: #{all_date_tags.length}"
-    puts "Total images to expire, nominally: #{expired_tags.length}"
-
-    if expired_tags.length == 0
-      # nothing to do
-      puts "No images will be removed."
-    elsif all_date_tags.length >= expired_tags.length + DEFAULT_MINIMUM_IMAGES_TO_KEEP
-      # delete all the expired tags, because there are at least 3 other datetime tags not expired
-      puts "All #{expired_tags.length} images with expired tags will be removed."
-      target_tags = expired_tags.map { | t | t[:tag] }
-    elsif all_date_tags.length <= DEFAULT_MINIMUM_IMAGES_TO_KEEP
-      # can't delete any of the expired tags
-      puts "In order to keep a minimum of #{DEFAULT_MINIMUM_IMAGES_TO_KEEP} timestamped images, none will be removed."
-      target_tags = []
-    else
-      # delete only all_date_tags.length - 3 of the expired tags
-      keep = all_date_tags.length - DEFAULT_MINIMUM_IMAGES_TO_KEEP
-      puts "Removing oldest #{keep} images in order to keep a minimum of #{DEFAULT_MINIMUM_IMAGES_TO_KEEP} timestamped images."
-      target_tags = expired_tags[0..(keep - 1)].map {|t| t[:tag]}
-    end
-    return target_tags
+    return determine_expired_tags(timestamp_tags, @expiration_age_days, @datetime_format)
   end
 
   # Delete the images from the given repo having the provided tags
@@ -130,40 +105,95 @@ class DockerImagePrune
     return all_deleted
   end
 
-  private
+# Query the repo and get all tags from it.
+# Returns tags having format XXXX-YYYYY and assumes that such tags
+# are timesamps tags.
+def get_timestamp_tags(repo)
 
-  # Return a Hash of tags that have timestamps embedded in them
-  # Each item returned is a hash containing keys: :tag, :datetime, :expired
-  def get_timestamp_tags(repo)
+  result_tags = []
 
-    all_date_tags = []
-
-    puts "Determining expired tags in #{dtr_tags_url(repo)}. Max age: #{@expiration_age_days} days."
-
-    response = RestClient::Request.execute(
-      method: :get,
-      url: dtr_tags_url(repo),
-      headers: request_headers
-    )
-    if (response.code == 200)
-      # puts response.body
-      j = JSON.parse(response.body)
-      j["tags"].each do | tag |
-        name = tag["name"]
-        datetimeString = name.split('-', 2)[1]
-        if datetimeString.nil? || datetimeString.empty?
-          # puts "Invalid datetime tag #{name}. Ignoring."
-          next
-        end
-        datetime_tag = Date.strptime(datetimeString, @datetime_format)
-        all_date_tags << {tag: name,
-                          datetime: datetime_tag,
-                          expired:  (datetime_tag + @expiration_age_days) < Date.today
-                        }
+  response = RestClient::Request.execute(
+    method: :get,
+    url: dtr_tags_url(repo),
+    headers: request_headers
+  )
+  if (response.code == 200)
+    # puts response.body
+    j = JSON.parse(response.body)
+    j["tags"].each do | tag |
+      name = tag["name"]
+      datetimeString = name.split('-', 2)[1]
+      if datetimeString.nil? || datetimeString.empty?
+        # puts "Invalid datetime tag #{name}. Ignoring."
+        next
       end
+      result_tags << name
     end
-    return all_date_tags
   end
+  return result_tags
+end
+
+def DockerImagePrune.test(args)
+  puts "RUBY ARGS:#{args}"
+  return ["aaa", "bbb"]
+end
+
+# Input: a simple list of tags with nominal date format
+# (e.g., XXXXX-YYYYY where YYYY is the datetime format)
+# Ouput: the list of timestamp tags that are expired,
+# taking account of the minimum 3 images we need to keep
+# around.
+#
+# This is a class function so that it can more easily be called from a bash script,
+# as in prune-local.sh.
+#
+def DockerImagePrune.determine_expired_tags(tags, expiration_age_days=DEFAULT_EXPIRATION_AGE_DAYS, datetime_format=DEFAULT_TAG_DATETIME_FORMAT)
+  target_tags = []
+  all_date_tags = []
+
+  tags.each do | tag |
+    datetimeString = tag.split('-', 2)[1]
+    if datetimeString.nil? || datetimeString.empty?
+      STDERR.puts "Invalid datetime tag #{name}. Ignoring."
+      next
+    end
+    datetime_tag = Date.strptime(datetimeString, datetime_format)
+    all_date_tags << {tag: tag,
+                      datetime: datetime_tag,
+                      expired:  (datetime_tag + expiration_age_days) < Date.today
+                      }
+  end
+
+  # ensure tags are in timestamp order
+  all_date_tags.sort!{|x, y| x[:datetime] <=> y[:datetime]}
+
+  expired_tags = all_date_tags.select { |t| t[:expired] }
+
+  STDERR.puts "Total images with timestamp tags: #{all_date_tags.length}"
+  STDERR.puts "Total images to expire, nominally: #{expired_tags.length}"
+
+  if expired_tags.length == 0
+    # nothing to do
+    STDERR.puts "No images will be removed."
+  elsif all_date_tags.length >= expired_tags.length + DEFAULT_MINIMUM_IMAGES_TO_KEEP
+    # delete all the expired tags, because there are at least 3 other datetime tags not expired
+    STDERR.puts "All #{expired_tags.length} images with expired tags will be removed."
+    target_tags = expired_tags.map { | t | t[:tag] }
+  elsif all_date_tags.length <= DEFAULT_MINIMUM_IMAGES_TO_KEEP
+    # can't delete any of the expired tags
+    STDERR.puts "In order to keep a minimum of #{DEFAULT_MINIMUM_IMAGES_TO_KEEP} timestamped images, none will be removed."
+    target_tags = []
+  else
+    # delete only all_date_tags.length - 3 of the expired tags
+    keep = all_date_tags.length - DEFAULT_MINIMUM_IMAGES_TO_KEEP
+    STDERR.puts "Removing oldest #{keep} images in order to keep a minimum of #{DEFAULT_MINIMUM_IMAGES_TO_KEEP} timestamped images."
+    target_tags = expired_tags[0..(keep - 1)].map {|t| t[:tag]}
+  end
+
+  return target_tags
+end
+
+  private
 
   def request_headers
     {"Authorization" => "Basic #{@dtr_auth}", "Content-Type" => "application/json"}

@@ -1,12 +1,14 @@
 # dtr-image-prune
 
-This repo contains functionality to list and delete images from a Docker Trusted Repository based on date stamps embedded in image tags.
+This repo contains logic to remove Docker images from either a Docker machine, or a Docker Trusted Repository. Logic about which images to expire is based on a date-time stamp embedded in image tags.
 
-This functionality does not directly delete a DTR image. In actuallity, this functionality simply removes the tag for an image. Then, when the DTR performs garbage collection (typically daily), the associated image will be removed if no other images depend on it.
+This code does not directly delete a DTR image. In actuality, this functionality simply removes the tag for an image on the DTR. Then, when the DTR performs garbage collection (typically daily), the associated image will be removed if no other images depend on it.
+
+Likewise, this code does not directly delete a local Docker image. Instead it simply removes a tag. If that tag is the last for a particular image, then the image will be removed from the connected Docker environment.
 
 ## Prerequisites
 
-These functions operates on DTR images labeled as follows [ID]-[MMDDYYYY]-[HHMMSS]. Here [ID] is a container ID, [MMDDYYYY] is the month, day, and year and [HHMMSS] is the hour, minute, and seconds. The assumption is that an image labeled as such was built at the given time. An example tag:  d60015f3c0-04172016-172400
+These functions operates on images labeled as follows [ID]-[MMDDYYYY]-[HHMMSS]. Here [ID] is a container ID (more-or-less), [MMDDYYYY] is the month, day, and year and [HHMMSS] is the hour, minute, and seconds. The assumption is that an image labeled as such was built at the given time. An example tag:  d60015f3c0-04172016-172400
 
 Docker authentication must be configured (as for Docker command line commands) in ~/.docker/config.json.
 
@@ -14,7 +16,11 @@ Docker authentication must be configured (as for Docker command line commands) i
 
 If there would be fewer than three images in a repository tagged with timestamps after pruning, this code will skip the removal of expired images so that the latest three images remain, regardless of expiration status.
 
-## Command line
+# Removing DTR Tags
+
+## prune-dtr.rb
+
+This Ruby code is a wrapper for the DockerImagePrune class contained in docker_image_prune.rb. prune-dtr.rb handles option parsing, while DockerImagePrune implements communication with a DTR as well as tag expiration logic.
 
 ### Options
 
@@ -25,10 +31,10 @@ If there would be fewer than three images in a repository tagged with timestamps
 
 ### Usage
 ```
-$ ./prune.rb --help
+$ ./prune-dtr.rb --help
 Remove Docker Trusted Repository images that are older than n days based on timestamp in tags.
 
-Usage: prune.rb [options]
+Usage: prune-dtr.rb [options]
     -n, --namespace namespace        (required) DTR namespace (e.g., cs)
     -a, --expiration age             maximum age in days (default = 90)
     -p, --prune                      prune the images (defaults to false, i.e. a dry run)
@@ -38,23 +44,29 @@ Usage: prune.rb [options]
 
 ### Examples
 
-`./prune.rb.rb --namespace pea1 --expiration 30 --no-prune`
+`./prune-dtr.rb.rb --namespace pea1 --expiration 30 --no-prune`
 
 Target namespace is https://dtr.cucloud.net/repositories/pea1/. Images with timestamps in tags that are more than 30 days ago are targeted for deletion. However, no tags will actually be deleted because of the `--no-prune` parameter.
 
-`./prune.rb --namespace cs  --expiration 90 --prune`
+`./prune-dtr.rb --namespace cs  --expiration 90 --prune`
 
 Target namespace is https://dtr.cucloud.net/repositories/cs. Images with timestamps in tags that are more than 90 days (i.e., the default) ago are targeted for deletion.
 
-## Dependencies
+# Removing Local Tags/Images
+
+## prune-local.sh
+
+This script uses Docker CLI commands and tag expiration logic from the Ruby DockerImagePrune class contained in docker_image_prune.rb.
+
+# Dependencies
 
 * Gems
   * rest-client
 * Docker Trusted Repository
   * version 1.4.3
 * Docker Trusted Repository API
-  * version 0
+  * version 0(?)
 
-## Future Changes
+# Future Changes
 
 Besides the parameter options listed above, the code is written to be fairly easily extensible to different DTR hosts, tag datetime formats, and minimum images to keep.
