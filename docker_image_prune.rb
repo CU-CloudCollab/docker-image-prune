@@ -87,7 +87,7 @@ class DockerImagePrune
     all_deleted = true
     tags.each do | tag |
       if dry_run
-        puts "Image #{@namespace}/#{repo}:#{tag} would be removed."
+        STDERR.puts "Image #{@namespace}/#{repo}:#{tag} would be removed."
       else
         response = RestClient::Request.execute(
           method: :delete,
@@ -95,9 +95,9 @@ class DockerImagePrune
           headers: request_headers
         )
         if (response.code == 202)
-          puts "Success. Removed expired tag: #{@namespace}/#{repo}:#{tag}"
+          STDERR.puts "Success. Removed expired tag: #{@namespace}/#{repo}:#{tag}"
         else
-          puts "Could not remove expired tag: #{@namespace}/#{repo}:#{tag}"
+          STDERR.puts "Could not remove expired tag: #{@namespace}/#{repo}:#{tag}"
           all_deleted = false
         end
       end
@@ -131,11 +131,6 @@ def get_timestamp_tags(repo)
     end
   end
   return result_tags
-end
-
-def DockerImagePrune.test(args)
-  puts "RUBY ARGS:#{args}"
-  return ["aaa", "bbb"]
 end
 
 # Input: a simple list of tags with nominal date format
