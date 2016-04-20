@@ -45,7 +45,7 @@ class DockerImagePrune
     result = true
     repos = repo_list
     repos.each do | repo |
-      puts "Processing repository: #{repo}"
+      STDERR.puts "Processing repository: #{repo}"
       expired_tags = expired_tags_for_repo(repo)
       result = delete_tags_for_repo(repo, expired_tags) && result
     end
