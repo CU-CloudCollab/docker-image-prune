@@ -58,6 +58,16 @@ Target namespace is https://dtr.cucloud.net/repositories/cs. Images with timesta
 
 This script uses Docker CLI commands and tag expiration logic from the Ruby DockerImagePrune class contained in docker_image_prune.rb.
 
+### Usage
+
+`usage: ./prune-local.sh [age-days]`
+
+**Examples**
+
+`./prune-local.sh` prunes with expiration age of default 90 days
+
+`./prune-local.sh 7` prunes with expiration age of 7 days
+
 # Dependencies
 
 * Gems
