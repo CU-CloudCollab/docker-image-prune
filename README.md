@@ -8,7 +8,7 @@ Likewise, this code does not directly delete a local Docker image. Instead it si
 
 ## Prerequisites
 
-These functions operates on images labeled as follows [ID]-[MMDDYYYY]-[HHMMSS]. Here [ID] is a container ID (more-or-less), [MMDDYYYY] is the month, day, and year and [HHMMSS] is the hour, minute, and seconds. The assumption is that an image labeled as such was built at the given time. An example tag:  d60015f3c0-04172016-172400
+These functions operate on images labeled as follows [ID]-[MMDDYYYY]-[HHMMSS]. Here [ID] is an arbitrart ID, [MMDDYYYY] is the month, day, and year and [HHMMSS] is the hour, minute, and seconds. The assumption is that an image labeled as such was built at the given time. An example tag:  d60015f3c0-04172016-172400
 
 Docker authentication must be configured (as for Docker command line commands) in ~/.docker/config.json.
 
@@ -52,11 +52,15 @@ Target namespace is https://dtr.cucloud.net/repositories/pea1/. Images with time
 
 Target namespace is https://dtr.cucloud.net/repositories/cs. Images with timestamps in tags that are more than 90 days (i.e., the default) ago are targeted for deletion.
 
+### Setting Up Tests
+
+`go-test-setup-dtr.sh` is a Bash script that tags images with a tag in the timestap format described above and pushes them to a DTR. It is easily modified to point to a different DTR or DTR repository.
+
 # Removing Local Tags/Images
 
 ## prune-local.sh
 
-This script uses Docker CLI commands and tag expiration logic from the Ruby DockerImagePrune class contained in docker_image_prune.rb.
+This script uses Docker CLI commands and tag expiration logic from the Ruby DockerImagePrune class contained in docker_image_prune.rb. It removes tags from local Docker environment to recover disk space.
 
 ### Usage
 
@@ -67,6 +71,10 @@ This script uses Docker CLI commands and tag expiration logic from the Ruby Dock
 `./prune-local.sh` prunes with expiration age of default 90 days
 
 `./prune-local.sh 7` prunes with expiration age of 7 days
+
+### Setting Up Tests
+
+`go-test-setup-local.sh` is a Bash script that pulls a Docker image and then tags it with timestamp tags as described above.
 
 # Dependencies
 
