@@ -147,16 +147,17 @@ def DockerImagePrune.determine_expired_tags(tags, expiration_age_days=DEFAULT_EX
   all_date_tags = []
 
   tags.each do | tag |
-    datetimeString = tag.split('-', 2)[1]
-    if datetimeString.nil? || datetimeString.empty?
-      STDERR.puts "Invalid datetime tag #{name}. Ignoring."
+    begin
+      datetimeString = tag.split('-', 2)[1]
+      datetime_tag = Date.strptime(datetimeString, datetime_format)
+      all_date_tags << {tag: tag,
+                        datetime: datetime_tag,
+                        expired:  (datetime_tag + expiration_age_days) < Date.today
+                        }
+    rescue
+      STDERR.puts "Invalid datetime tag #{tag}. Ignoring."
       next
     end
-    datetime_tag = Date.strptime(datetimeString, datetime_format)
-    all_date_tags << {tag: tag,
-                      datetime: datetime_tag,
-                      expired:  (datetime_tag + expiration_age_days) < Date.today
-                      }
   end
 
   # ensure tags are in timestamp order
