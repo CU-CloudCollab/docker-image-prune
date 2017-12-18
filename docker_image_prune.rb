@@ -94,7 +94,7 @@ class DockerImagePrune
           url: dtr_manifests_url(repo, tag),
           headers: request_headers
         )
-        if (response.code == 202)
+        if (response.code == 204)
           STDERR.puts "Success. Removed expired tag: #{@namespace}/#{repo}:#{tag}"
         else
           STDERR.puts "Could not remove expired tag: #{@namespace}/#{repo}:#{tag}"
@@ -204,6 +204,6 @@ end
   end
 
   def dtr_manifests_url(repo, tag)
-    "https://#{@dtr_hostname}/api/v0/repositories/#{@namespace}/#{repo}/manifests/#{tag}"
+    "https://#{@dtr_hostname}/api/v0/repositories/#{@namespace}/#{repo}/tags/#{tag}"
   end
 end
