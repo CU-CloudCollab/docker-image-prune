@@ -81,7 +81,7 @@ This script uses Docker CLI commands and tag expiration logic from the Ruby Dock
 * Gems
   * rest-client
 * Docker Trusted Repository
-  * version 1.4.3
+  * version 2.1.7
 * Docker Trusted Repository API
   * version 0(?)
 

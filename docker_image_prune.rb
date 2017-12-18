@@ -120,7 +120,7 @@ def get_timestamp_tags(repo)
   if (response.code == 200)
     # puts response.body
     j = JSON.parse(response.body)
-    j["tags"].each do | tag |
+    j.each do | tag |
       name = tag["name"]
       datetimeString = name.split('-', 2)[1]
       if datetimeString.nil? || datetimeString.empty?
